@@ -1,0 +1,228 @@
+.chat {
+    flex: 2;
+    border-left: 1px solid rgba(220, 223, 228, 0.5);
+    border-right: 1px solid rgba(220, 223, 228, 0.5);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box; /* 新增：根节点加盒模型，避免整体溢出 */
+
+    .top {
+        padding: 26px;
+        display: flex;
+        align-items: center; /* 修复：align-content → align-items（单行对齐用这个） */
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(220, 223, 228, 0.5);
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 26px;
+
+            img {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+
+            .message {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+
+                span {
+                    font-size: 16px; /* 修复：front-size → font-size */
+                    font-weight: bold; /* 修复：front-weight → font-weight */
+                }
+
+                p {
+                    font-size: 14px;
+                    color: gray;
+                    margin: 0; /* 新增：重置默认margin，避免布局错位 */
+                }
+            }
+        }
+
+        .icons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+
+            img {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    }
+
+    .center {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background-color: rgba(17, 25, 40, 0.05);
+        box-sizing: border-box; /* 新增：避免padding撑大宽度 */
+
+        &::-webkit-scrollbar {
+            width: 6px;
+            background: transparent;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: rgba(220, 223, 228, 0.3);
+            border-radius: 3px;
+        }
+        scrollbar-width: thin;
+        scrollbar-color: rgba(220, 223, 228, 0.3) transparent;
+
+        /* 单个消息项 - 核心修复1：宽度100%，让容器占满.center宽度，才能贴边 */
+        .message-item {
+            display: flex;
+            margin-bottom: 15px;
+            width: 100%;
+            align-items: flex-end; /* 消息和头像底部对齐，更自然 */
+
+            /* 对方消息：左对齐，头像贴左 */
+            &.other {
+                justify-content: flex-start; /* 内容靠左 */
+                flex-direction: row;
+
+                /* 修复：气泡样式直接嵌套在.other里，替代无效的&写法 */
+                .message-content .message-bubble {
+                    background-color: rgba(37, 38, 39, 0.8);
+                    border-bottom-left-radius: 4px;
+                }
+            }
+
+            /* 自己消息：右对齐，头像贴最右 - 核心修复2 */
+            &.me {
+                justify-content: flex-end;
+                flex-direction: row;
+
+                /* 修复：气泡样式直接嵌套在.me里，替代无效的&写法 */
+                .message-content .message-bubble {
+                    background-color: #0084ff;
+                    border-bottom-right-radius: 4px;
+                }
+            }
+
+            /* 消息头像 - 核心修复3：精准控制间距，确保贴边 */
+            .message-avatar {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                object-fit: cover;
+                flex-shrink: 0;
+                margin: 0 8px; /* 统一头像和消息气泡的间距 */
+            }
+
+            /* 消息内容容器 - 核心修复4：气泡最大宽度70%，避免过宽 */
+            .message-content {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                max-width: 70%; /* 气泡最大宽度，不超过容器70% */
+
+                /* 消息气泡 - 核心修复5：解决长文本不换行 */
+                .message-bubble {
+                    padding: 10px 15px;
+                    border-radius: 18px;
+                    line-height: 1.4;
+                    color: white;
+                    /* 强制长文本换行（解决核心问题） */
+                    word-wrap: break-word; /* 换行不截断单词 */
+                    word-break: break-word; /* 兼容多浏览器 */
+                    white-space: pre-wrap; /* 保留空格，同时换行 */
+                }
+
+                /* 消息时间 */
+                .message-time {
+                    font-size: 12px;
+                    color: #999;
+                    align-self: flex-end;
+                    margin-right: 8px;
+                }
+            }
+        }
+    }
+
+    .bottom {
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px; /* 子元素统一间距，替代space-between */
+        border-top: 1px solid rgba(220, 223, 228, 0.5);
+        box-sizing: border-box; /* 避免padding撑大.bottom宽度 */
+
+        /* 优化3：精准样式层级（限定.icons里的img，而非全局） */
+        .icons {
+            display: flex;
+            gap: 20px;
+            align-items: center; /* 图标垂直居中，避免错位 */
+            flex-shrink: 0; /* icons容器不被挤压 */
+        }
+
+        /* 优化3：拆分img样式，精准指向.icons和.emoji里的img */
+        .icons img, .emoji img {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transition: opacity 0.2s; /* hover轻微透明，提升交互反馈 */
+        }
+
+        .icons img:hover, .emoji img:hover {
+            opacity: 0.8;
+        }
+
+        input {
+            flex: 1; /* 占满剩余空间 */
+            background-color: rgba(37, 38, 39, 0.5);
+            border: none;
+            outline: none;
+            color: white;
+            padding: 10px 20px;
+            box-sizing: border-box; /* 避免padding撑大input宽度 */
+            border-radius: 20px; /* 圆角，视觉更友好 */
+            transition: background-color 0.2s; /* focus过渡效果 */
+        }
+
+        input:focus {
+            background-color: rgba(37, 38, 39, 0.7); /* 聚焦时加深背景 */
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2); /* 轻微外发光，提示激活 */
+        }
+
+        .emoji {
+            display: flex;
+            align-items: center;
+            position: relative; /* 作为表情面板绝对定位的参考点 */
+            flex-shrink: 0; /* emoji容器不被挤压 */
+
+            .emojiPicker {
+                position: absolute;
+                z-index: 9999; /* 提高层级，避免被遮挡 */
+                bottom: 100%; /* 面板在表情图标正上方 */
+                right: 0; /* 面板右边缘和图标对齐 */
+                transform: translateY(-10px); /* 向上偏移，避免贴紧 */
+                width: 350px; /* 固定面板宽度 */
+                max-width: calc(100vw - 40px); /* 响应式：不超出屏幕 */
+                border-radius: 8px; /* 圆角，统一风格 */
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* 新增：加阴影，提升层次感 */
+            }
+        }
+
+        .sendChat {
+            background-color: blue;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            flex-shrink: 0; /* 按钮永不被挤压 */
+            transition: background-color 0.2s; /* hover过渡效果 */
+        }
+
+        .sendChat:hover {
+            background-color: rgb(0, 80, 200); /* hover加深蓝色，反馈更明显 */
+        }
+    }
+}

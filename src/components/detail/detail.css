@@ -1,0 +1,6 @@
+.detail {
+    width: 300px;           /* 固定宽度 */
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 10px;
+}

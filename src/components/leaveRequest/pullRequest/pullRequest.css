@@ -1,0 +1,443 @@
+.pullRequest {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* 表单头部 */
+.form-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 15px;
+}
+
+.back-btn {
+  padding: 10px 18px;
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.back-btn:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #667eea;
+  font-weight: 700;
+}
+
+/* 选中的课程信息 */
+.selected-course-info {
+  margin-bottom: 30px;
+  padding: 25px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.lesson-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.selected-course-info h3 {
+  margin: 0 0 15px 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.course-summary {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.95;
+}
+
+.summary-item .icon {
+  font-size: 18px;
+}
+
+/* 表单样式 */
+.leave-form {
+  width: 100%;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* 请假原因选择框 - 深色主题 */
+.form-group select[name="reason"] {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #fff;
+  border-color: #334155;
+}
+
+.form-group select[name="reason"]:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+.form-group select[name="reason"] option {
+  background: #1e293b;
+  color: #fff;
+}
+
+/* 补课选项分割线 */
+.form-section-divider {
+  margin: 35px 0 25px 0;
+  padding-top: 25px;
+  border-top: 2px solid rgba(102, 126, 234, 0.15);
+}
+
+.form-section-divider h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: #667eea;
+  font-weight: 700;
+}
+
+.section-hint {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* 补课选项卡片 */
+.makeup-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.makeup-option-card {
+  padding: 20px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.makeup-option-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.makeup-option-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+}
+
+.option-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.option-content h4 {
+  margin: 0 0 6px 0;
+  font-size: 17px;
+  color: #333;
+  font-weight: 600;
+}
+
+.option-content p {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.option-radio {
+  text-align: right;
+  color: #667eea;
+  font-weight: bold;
+  font-size: 20px;
+  margin-top: auto;
+}
+
+/* 时间段选择 */
+.time-slot-selection {
+  margin-bottom: 25px;
+  padding: 25px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.time-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+.time-slot-card {
+  padding: 18px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.time-slot-card:hover:not(.disabled) {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+}
+
+.time-slot-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.time-slot-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
+.time-slot-card.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.slot-date {
+  font-weight: 700;
+  font-size: 15px;
+  color: #333;
+}
+
+.time-slot-card.selected .slot-date {
+  color: white;
+}
+
+.slot-check {
+  background: white;
+  color: #667eea;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.slot-day-time {
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.slot-day {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 6px;
+  font-weight: 600;
+  color: #667eea;
+  font-size: 13px;
+}
+
+.time-slot-card.selected .slot-day {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.slot-time {
+  color: #666;
+  font-weight: 500;
+}
+
+.time-slot-card.selected .slot-time {
+  color: white;
+}
+
+.slot-capacity {
+  font-size: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.time-slot-card.selected .slot-capacity {
+  border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+.capacity-available {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.time-slot-card.selected .capacity-available {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.capacity-full {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.time-slot-card.disabled .capacity-full {
+  color: #999;
+}
+
+/* 表单操作按钮 */
+.form-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.cancel-btn,
+.submit-btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: #666;
+  border: 2px solid #e5e7eb;
+}
+
+.cancel-btn:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .makeup-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .time-slots-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .course-summary {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
