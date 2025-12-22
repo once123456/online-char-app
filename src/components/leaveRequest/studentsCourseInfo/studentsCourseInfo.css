@@ -386,6 +386,11 @@
   background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
 }
 
+.request-item.status-completed {
+  border-color: rgba(6, 182, 212, 0.3);
+  background: linear-gradient(135deg, #ecfeff 0%, #ffffff 100%);
+}
+
 .request-header {
   display: flex;
   justify-content: space-between;
@@ -434,6 +439,10 @@
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
+.status-tag.completed {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
 .request-details {
   font-size: 14px;
   color: #555;
@@ -465,6 +474,12 @@
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   border-left-color: #ef4444;
   color: #991b1b;
+}
+
+.review-info.completed {
+  background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+  border-left-color: #06b6d4;
+  color: #0e7490;
 }
 
 .review-label {

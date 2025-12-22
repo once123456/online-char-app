@@ -120,3 +120,4 @@ const VotingPanel = ({ activity, onBack }) => {
 };
 
 export default VotingPanel;
+
