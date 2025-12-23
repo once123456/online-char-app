@@ -82,7 +82,8 @@ react-firebase-chat/
   - 请假申请测试工具（RequestsTestPanel）
 
 **硬编码状态**: ⚠️ **部分硬编码**
-- `LeaveRequest.jsx`: 课程数据（lessons数组）使用硬编码
+- `LeaveRequest.jsx`: 课程数据（lessons数组）使用硬编码 ⚠️
+  - **注意**: Firebase中已有 `courses` 集合，但代码尚未连接
 - 学生数据从 Firebase `students` 集合加载 ✅
 - 请假申请数据从 Firebase `requests` 集合加载 ✅
 
@@ -111,14 +112,30 @@ react-firebase-chat/
 ```javascript
 {
   id: "STUDENT_001",  // 文档ID
-  name: "学生姓名",
-  level: "年级/级别",
-  age: "年龄",
-  class: "班级",
-  parentName: "家长姓名",
-  parentPhone: "家长电话",
-  enrollmentDate: "入学日期",
-  // ... 其他字段
+  enrollment: [  // 学生注册的课程列表
+    {
+      id: 1,  // 课程ID
+      name: "故事起航 - 認識自我與舞台",
+      courseId: "SPEC_C001round001",  // 关联的课程ID
+      dateStr: "2025-12-13",
+      timeSlot: "SAT 12:00 - 14:00",
+      completed: false
+    },
+    // ... 更多课程
+  ],
+  personalInfo: {
+    name: "学生姓名",
+    chineseName: "中文名",
+    level: "K3",  // 年级/级别
+    sex: "M",  // 性别
+    preferredLanguage: "Cantonese",  // 偏好语言
+    parentName: "家长姓名",
+    parentContact: "家长联系方式",
+    allergies: "NIL",  // 过敏信息
+    condition: "",  // 身体状况
+    comfortMethod: "",  // 安抚方式
+    favChar: ""  // 喜欢的角色
+  }
 }
 ```
 
@@ -142,26 +159,71 @@ react-firebase-chat/
 ```javascript
 {
   id: "自动生成ID",
-  studentId: "STUDENT_001",
+  studentId: "STUDENT_001",  // 学生ID（从登录用户获取）
   studentName: "学生姓名",
-  lesson: {
-    id: 3,
+  lesson: {  // 选中的课程信息
+    id: 3,  // 课程序号
     name: "课程名称",
-    dateTime: "2025-12-20T12:00-14:00",
-    timeSlot: "SAT 12:00 - 14:00"
+    dateTime: "2025-12-20T12:00-14:00",  // 原课程日期时间
+    timeSlot: "SAT 12:00 - 14:00",  // 原课程时间段
+    courseId: "SPEC_C001round001"  // 课程ID（可选）
   },
-  courseCode: "SPEC_C001",
-  courseName: "演讲课程",
-  reason: "illness",
-  description: "请假说明",
-  makeupOption: "specific_time",
-  selectedTimeSlot: { /* 补课时间信息 */ },
-  submitTime: "2025-12-17 14:30:00",
-  status: "pending",  // pending, approved, rejected
-  reviewTime: "2025-12-17 15:20:00",
-  reviewNote: "审核备注"
+  courseCode: "SPEC_C001",  // 课程代码
+  courseName: "演讲课程",  // 课程名称
+  reason: "illness",  // 请假原因（必填）
+  // 可选值: "illness"（身体不适）, "family"（家庭事务）, 
+  //         "travel"（外出旅行）, "exam"（学校考试）, "other"（其他原因）
+  description: "请假说明",  // 详细说明（选填）
+  makeupOption: "specific_time",  // 补课/换课安排（必填）
+  // 可选值: "specific_time"（选择其他时间补课）, 
+  //         "next_quarter"（延期至下一季度）, 
+  //         "skip"（跳过本节课）
+  selectedTimeSlot: {  // 选择的补课时间（当makeupOption为"specific_time"时）
+    id: "SPEC_C001round001_lesson_5",  // 补课时间唯一标识
+    courseId: "SPEC_C001round001",  // 补课课程ID
+    lessonId: "5",  // 补课课程中的第几节
+    lessonName: "课程名称",  // 补课课程名称
+    date: "2025-12-27",  // 补课日期
+    dateDisplay: "2025年12月27日",  // 格式化的日期显示
+    day: "周六",  // 星期几
+    time: "SAT 12:00 - 14:00",  // 补课时间段
+    available: true  // 是否可用
+  },
+  submitTime: "2025-12-17 14:30:00",  // 提交时间（格式：YYYY-MM-DD HH:mm:ss）
+  status: "pending",  // 申请状态
+  // 可选值: "pending"（待审核）, "approved"（已通过）, 
+  //         "rejected"（已拒绝）, "completed"（已完成）
+  reviewTime: "2025-12-17 15:20:00",  // 审核时间（格式：YYYY-MM-DD HH:mm:ss）
+  reviewNote: "审核备注",  // 审核备注/原因
+  reviewedBy: "admin_uid"  // 审核人ID（可选）
 }
 ```
+
+**请假表单字段说明**：
+
+1. **请假原因** (`reason`) - 必填
+   - `illness`: 身体不适
+   - `family`: 家庭事务
+   - `travel`: 外出旅行
+   - `exam`: 学校考试
+   - `other`: 其他原因
+
+2. **详细说明** (`description`) - 选填
+   - 文本域，用于详细描述请假原因
+
+3. **补课/换课安排** (`makeupOption`) - 必填
+   - `specific_time`: 选择其他时间补课
+     - 需要从同一主题、同一季度但不同时间段的课程中选择补课时间
+     - 系统会自动查找匹配的课程并显示可选时间段
+   - `next_quarter`: 延期至下一季度
+     - 将本节课安排到下一个学期补上
+   - `skip`: 跳过本节课
+     - 不进行补课，直接继续后续课程
+
+4. **补课时间选择** (`selectedTimeSlot`) - 当`makeupOption`为`specific_time`时必填
+   - 从系统自动匹配的补课时间中选择
+   - 匹配规则：同一`category`（如SPEC）、同一`round`（如round001），但不同课程编号的课程
+   - 只显示未完成且日期在未来的课程
 
 #### 4. `activities` - 活动表（待实现）
 **当前状态**: ⚠️ 使用硬编码数据，尚未连接数据库
@@ -206,26 +268,36 @@ react-firebase-chat/
 }
 ```
 
-#### 6. `courses` / `lessons` - 课程表（待实现）
-**当前状态**: ⚠️ 使用硬编码数据，尚未连接数据库
+#### 6. `courses` - 课程表
+**当前状态**: ✅ 已创建数据库集合，但代码中仍使用硬编码数据
 
 ```javascript
 {
-  id: "课程ID",
-  courseCode: "SPEC_C001",
-  courseName: "演讲课程",
-  studentId: "STUDENT_001",
-  lessons: [
+  id: "SPEC_C001round001",  // 文档ID（课程ID）
+  category: "SPEC",  // 课程类别
+  timeSlot: "SAT 12:00 - 14:00",  // 时间段
+  lessons: [  // 课程列表
     {
-      id: 1,
-      name: "课程名称",
-      dateTime: "2025-12-06T12:00-14:00",
-      timeSlot: "SAT 12:00 - 14:00",
-      completed: true
-    }
+      id: 1,  // 课程序号
+      name: "故事起航 - 認識自我與舞台",
+      dateStr: "2025-12-13",  // 日期字符串
+      completed: false  // 是否完成
+    },
+    {
+      id: 2,
+      name: "句子結構大師 - 清晰表達",
+      dateStr: "2025-12-20",
+      completed: false
+    },
+    // ... 共12节课程
   ]
 }
 ```
+
+**数据结构说明**:
+- 每个课程文档代表一个课程班次（round）
+- `lessons` 数组包含该课程的所有课时
+- 学生通过 `enrollment` 数组中的 `courseId` 关联到具体课程
 
 #### 7. `timeSlots` - 补课时间段表（待实现）
 **当前状态**: ⚠️ 使用硬编码数据，尚未连接数据库
@@ -335,13 +407,19 @@ npm run build
 - **迁移计划**: 创建 `activities` 集合，迁移活动数据
 
 #### 2. 请假申请 (`src/pages/LeaveRequest.jsx`)
-- ✅ **课程数据**: `lessons` 数组（12节课程）- **硬编码**
-- ✅ **补课时间段**: `makeupTimeSlots` 数组 - **硬编码**
-- **迁移计划**: 
-  - 创建 `courses` 或 `lessons` 集合存储课程数据
-  - 创建 `timeSlots` 集合存储补课时间段
+- ✅ **课程数据**: `lessons` 数组（12节课程）- **硬编码** ⚠️
+  - **数据库状态**: ✅ Firebase中已有 `courses` 集合，包含完整的课程数据
+  - **数据结构**: 
+    - `courses` 集合：`{ id: "SPEC_C001round001", category: "SPEC", timeSlot: "SAT 12:00 - 14:00", lessons: [...] }`
+    - `students.enrollment` 数组：`[{ courseId: "SPEC_C001round001", id: 1, name: "...", dateStr: "...", timeSlot: "...", completed: false }]`
+  - **待迁移**: 需要将代码从硬编码改为：
+    1. 从 `students.enrollment` 获取学生注册的课程列表
+    2. 通过 `enrollment[].courseId` 关联到 `courses.id` 获取完整课程信息
+    3. 合并 `enrollment` 和 `courses.lessons` 数据（包含 `completed` 状态）
+- ✅ **补课时间段**: `makeupTimeSlots` 数组 - **硬编码** ⚠️
+  - **迁移计划**: 创建 `timeSlots` 集合存储补课时间段
 - **已连接数据库**:
-  - ✅ 学生数据从 `students` 集合加载
+  - ✅ 学生数据从 `students` 集合加载（包含 `personalInfo` 和 `enrollment`）
   - ✅ 请假申请从 `requests` 集合加载
 
 #### 3. 聊天系统 (`src/components/chat/`, `src/components/list/`)
@@ -358,9 +436,13 @@ npm run build
   - [ ] 迁移活动详情（介绍、规则、安排、奖项）
   - [ ] 迁移投票候选人数据
   - [ ] 实现投票实时同步
-- [ ] 将课程数据迁移到 Firebase `courses` 或 `lessons` 集合
-  - [ ] 迁移课程列表（12节课程）
-  - [ ] 迁移课程进度状态
+- [ ] 将课程数据从硬编码迁移到 Firebase `courses` 集合
+  - [x] ✅ **数据库已创建** `courses` 集合（包含完整课程数据）
+  - [x] ✅ **数据库已创建** `students` 集合（包含 `enrollment` 数组）
+  - [ ] ⚠️ **待完成**: 修改 `LeaveRequest.jsx` 从 `courses` 集合加载课程数据
+  - [ ] ⚠️ **待完成**: 根据学生 `enrollment[].courseId` 关联到 `courses.id`
+  - [ ] ⚠️ **待完成**: 从 `students.enrollment` 获取学生的课程列表
+  - [ ] 实现课程进度状态的实时同步（`completed` 字段）
   - [ ] 实现课程数据的动态加载
 - [ ] 将补课时间段迁移到 Firebase `timeSlots` 集合
   - [ ] 存储可用时间段
@@ -389,12 +471,12 @@ npm run build
 
 ### Firestore
 - ✅ 已创建集合：
-  - `students` - 学生信息
+  - `students` - 学生信息（包含 `enrollment` 和 `personalInfo`）
   - `accounts` - 账号信息
   - `requests` - 请假申请
+  - `courses` - 课程信息（包含课程列表和课时信息）
 - ⚠️ 待创建集合：
   - `activities` - 活动信息
-  - `courses` / `lessons` - 课程信息
   - `timeSlots` - 补课时间段
   - `messages` - 聊天消息
 

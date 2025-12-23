@@ -1,0 +1,391 @@
+/* Courses View Container */
+.courses-view {
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.courses-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.courses-view-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 24px;
+}
+
+.view-mode-toggle {
+  display: flex;
+  gap: 8px;
+  background: white;
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: #f0f0f0;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* Calendar View */
+.course-calendar {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.calendar-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+}
+
+.calendar-grid {
+  width: 100%;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.weekday-header {
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.calendar-dates {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+  background: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.calendar-day:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-day.empty {
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.calendar-day.today {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.calendar-day.has-course {
+  border-color: #ffc107;
+  background: #fffbf0;
+}
+
+.day-number {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.course-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.course-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.course-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  margin-bottom: 8px;
+  z-index: 10;
+  min-width: 200px;
+}
+
+.calendar-day:hover .course-tooltip {
+  opacity: 1;
+}
+
+.tooltip-item {
+  margin: 4px 0;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tooltip-item:last-child {
+  border-bottom: none;
+}
+
+.tooltip-time {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.tooltip-name {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.tooltip-status {
+  font-size: 10px;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.tooltip-status.completed {
+  background: #28a745;
+}
+
+.tooltip-status.pending {
+  background: #ffc107;
+  color: #333;
+}
+
+/* List View */
+.course-list {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.course-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.course-list-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+}
+
+.list-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  font-size: 14px;
+  color: #666;
+}
+
+.stat-item strong {
+  color: #333;
+  margin-left: 4px;
+}
+
+.course-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.course-list-item {
+  padding: 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.course-list-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.course-item-main {
+  flex: 1;
+}
+
+.course-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.course-name {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.course-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #666;
+  min-width: 80px;
+}
+
+.detail-value {
+  color: #333;
+}
+
+.completed-indicator {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .courses-view-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .view-mode-toggle {
+    width: 100%;
+  }
+
+  .toggle-btn {
+    flex: 1;
+  }
+
+  .calendar-day {
+    padding: 4px;
+  }
+
+  .day-number {
+    font-size: 12px;
+  }
+
+  .course-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .list-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+
+

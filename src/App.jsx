@@ -1,82 +1,94 @@
-import { useState, useEffect } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "./lib/firebase";
+import { useState } from "react";
+// import { onAuthStateChanged, signOut } from "firebase/auth";
+// import { doc, getDoc, setDoc } from "firebase/firestore";
+// import { auth, db } from "./lib/firebase";
 import Chat from "./components/chat/Chat.jsx";
 import Detail from "./components/detail/Detail.jsx";
 import List from "./components/list/List.jsx";
 import LeaveRequest from "./pages/LeaveRequest.jsx";
 import Activities from "./components/activities/Activities.jsx";
-import Auth from "./components/auth/Auth.jsx";
+import MediaUpload from "./components/media/MediaUpload.jsx";
+// import Auth from "./components/auth/Auth.jsx";
 
 const App = () => {
   const [currentView, setCurrentView] = useState("chat");
-  const [user, setUser] = useState(null);
-  const [userAccount, setUserAccount] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // 暂时跳过登录验证，使用模拟用户数据
+  const [user] = useState({ 
+    email: "demo@example.com",
+    uid: "demo-user-001"
+  });
+  // 暂时不使用accounts表，直接绑定学生ID为"1"
+  const [userAccount] = useState({
+    email: "demo@example.com",
+    studentId: "1", // 暂时固定为"1"，不依赖accounts表
+    uid: "demo-user-001",
+    role: "parent"
+  });
+  const [loading] = useState(false);
 
-  // 监听认证状态
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        // 获取用户账号信息
-        try {
-          const accountDoc = await getDoc(doc(db, "accounts", currentUser.uid));
-          if (accountDoc.exists()) {
-            setUserAccount({ ...accountDoc.data(), uid: currentUser.uid });
-          } else {
-            // 如果accounts集合中没有，尝试从accounts集合查找（旧数据格式）
-            const { collection, getDocs, query, where } = await import("firebase/firestore");
-            const accountsRef = collection(db, "accounts");
-            const q = query(accountsRef, where("email", "==", currentUser.email));
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-              const accountData = querySnapshot.docs[0].data();
-              // 更新到accounts集合（使用UID作为文档ID）
-              await setDoc(doc(db, "accounts", currentUser.uid), {
-                email: accountData.email,
-                studentId: accountData.studentId,
-                createdAt: accountData.createdAt || new Date().toISOString(),
-                role: accountData.role || 'parent'
-              });
-              setUserAccount({ ...accountData, uid: currentUser.uid });
-            }
-            if (!querySnapshot.empty) {
-              const accountData = querySnapshot.docs[0].data();
-              setUserAccount({ ...accountData, uid: currentUser.uid });
-            }
-          }
-        } catch (error) {
-          console.error("获取用户账号信息失败:", error);
-        }
-        setUser(currentUser);
-      } else {
-        setUser(null);
-        setUserAccount(null);
-      }
-      setLoading(false);
-    });
+  // 暂时注释掉认证监听
+  // useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+  //     if (currentUser) {
+  //       // 获取用户账号信息
+  //       try {
+  //         const accountDoc = await getDoc(doc(db, "accounts", currentUser.uid));
+  //         if (accountDoc.exists()) {
+  //           setUserAccount({ ...accountDoc.data(), uid: currentUser.uid });
+  //         } else {
+  //           // 如果accounts集合中没有，尝试从accounts集合查找（旧数据格式）
+  //           const { collection, getDocs, query, where } = await import("firebase/firestore");
+  //           const accountsRef = collection(db, "accounts");
+  //           const q = query(accountsRef, where("email", "==", currentUser.email));
+  //           const querySnapshot = await getDocs(q);
+  //           
+  //           if (!querySnapshot.empty) {
+  //             const accountData = querySnapshot.docs[0].data();
+  //             // 更新到accounts集合（使用UID作为文档ID）
+  //             await setDoc(doc(db, "accounts", currentUser.uid), {
+  //               email: accountData.email,
+  //               studentId: accountData.studentId,
+  //               createdAt: accountData.createdAt || new Date().toISOString(),
+  //               role: accountData.role || 'parent'
+  //             });
+  //             setUserAccount({ ...accountData, uid: currentUser.uid });
+  //           }
+  //           if (!querySnapshot.empty) {
+  //             const accountData = querySnapshot.docs[0].data();
+  //             setUserAccount({ ...accountData, uid: currentUser.uid });
+  //           }
+  //         }
+  //       } catch (error) {
+  //         console.error("获取用户账号信息失败:", error);
+  //       }
+  //       setUser(currentUser);
+  //     } else {
+  //       setUser(null);
+  //       setUserAccount(null);
+  //     }
+  //     setLoading(false);
+  //   });
 
-    return () => unsubscribe();
-  }, []);
+  //   return () => unsubscribe();
+  // }, []);
 
   // 处理登录成功
-  const handleAuthSuccess = (user, accountData) => {
-    setUser(user);
-    setUserAccount(accountData);
-  };
+  // const handleAuthSuccess = (user, accountData) => {
+  //   setUser(user);
+  //   setUserAccount(accountData);
+  // };
 
-  // 处理登出
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-      setUserAccount(null);
-    } catch (error) {
-      console.error("登出失败:", error);
-      alert("登出失败，请稍后重试");
-    }
+  // 处理登出（暂时禁用）
+  const handleLogout = () => {
+    console.log("登出功能已暂时禁用（跳过登录验证模式）");
+    // try {
+    //   await signOut(auth);
+    //   setUser(null);
+    //   setUserAccount(null);
+    // } catch (error) {
+    //   console.error("登出失败:", error);
+    //   alert("登出失败，请稍后重试");
+    // }
   };
 
   // 如果正在加载，显示加载状态
@@ -89,10 +101,10 @@ const App = () => {
     );
   }
 
-  // 如果未登录，显示登录页面
-  if (!user) {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
-  }
+  // 暂时跳过登录验证，直接显示主界面
+  // if (!user) {
+  //   return <Auth onAuthSuccess={handleAuthSuccess} />;
+  // }
 
   return (
     <div className='container'>
@@ -116,6 +128,12 @@ const App = () => {
             onClick={() => setCurrentView("activities")}
           >
             🎉 活动中心
+          </button>
+          <button 
+            className={currentView === "media" ? "active" : ""} 
+            onClick={() => setCurrentView("media")}
+          >
+            📷 照片/视频
           </button>
         </div>
         
@@ -142,9 +160,13 @@ const App = () => {
         <div className="leave-request-view">
           <LeaveRequest userAccount={userAccount} />
         </div>
-      ) : (
+      ) : currentView === "activities" ? (
         <div className="activities-view">
           <Activities />
+        </div>
+      ) : (
+        <div className="media-upload-view">
+          <MediaUpload />
         </div>
       )}
     </div>
