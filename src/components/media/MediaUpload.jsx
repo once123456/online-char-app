@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './mediaUpload.css';
 import { preprocessFiles, formatFileSize, revokePreviewUrls } from './filePreprocessor';
-import { uploadFiles, deleteFile } from '../../lib/uploadService';
+import { uploadFiles, deleteFile, getFileDownloadURL, listUserFiles } from '../../lib/uploadService';
 import { compressImages } from './imageCompressor';
+import { db } from '../../lib/firebase';
+import { collection, getDocs, query, where, orderBy, addDoc, deleteDoc, doc } from 'firebase/firestore';
 
 const MediaUpload = () => {
   const [selectedFiles, setSelectedFiles] = useState([]); // 预处理后的文件信息数组
@@ -14,6 +16,115 @@ const MediaUpload = () => {
   
   // 当前用户ID（实际应该从认证状态获取）
   const userId = "3ChvOcuZASM3D9UhmGEHAULFaok2";
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null); // 预览的文件
+
+  // 加载历史文件
+  useEffect(() => {
+    const loadHistoryFiles = async () => {
+      if (!db || activeTab !== 'download') return;
+      
+      setLoadingHistory(true);
+      try {
+        console.log('📂 开始加载历史文件，用户ID:', userId);
+        
+        // 从Firestore加载文件列表
+        const mediaFilesRef = collection(db, 'mediaFiles');
+        const q = query(
+          mediaFilesRef,
+          where('userId', '==', userId),
+          orderBy('uploadDate', 'desc')
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const files = [];
+        
+        querySnapshot.forEach((docSnapshot) => {
+          const data = docSnapshot.data();
+          const uploadDate = data.uploadDate?.toDate ? data.uploadDate.toDate() : new Date(data.uploadDate || Date.now());
+          
+          files.push({
+            id: docSnapshot.id,
+            name: data.fileName || '未知文件',
+            type: data.fileType || 'image',
+            size: formatFileSize(data.fileSize || 0),
+            uploadDate: uploadDate.toLocaleString('zh-CN'),
+            thumbnail: data.thumbnailURL || null,
+            url: data.downloadURL || null,
+            storagePath: data.storagePath,
+            downloadUrlError: !data.downloadURL ? { type: 'missing_url' } : null
+          });
+        });
+        
+        setUploadedFiles(files);
+        console.log('✅ 历史文件加载成功（从Firestore）:', files.length, '个文件');
+        
+        // 如果Firestore中没有文件，尝试从Storage加载（作为后备方案）
+        if (files.length === 0) {
+          console.log('Firestore中没有文件记录，尝试从Storage加载...');
+          try {
+            const storageFiles = await listUserFiles(userId);
+            if (storageFiles.length > 0) {
+              setUploadedFiles(storageFiles);
+              console.log('✅ 从Storage加载历史文件成功:', storageFiles.length, '个文件');
+            } else {
+              console.log('Storage中也没有文件');
+            }
+          } catch (storageError) {
+            console.warn('从Storage加载文件失败:', storageError);
+          }
+        }
+      } catch (error) {
+        console.error('❌ 加载历史文件失败:', error);
+        
+        // 如果是索引错误，提供创建索引的链接
+        if (error.code === 'failed-precondition' && error.message?.includes('index')) {
+          const indexUrl = error.message.match(/https:\/\/[^\s]+/)?.[0];
+          if (indexUrl) {
+            console.warn('⚠️ 需要创建Firestore索引:', indexUrl);
+            console.warn('   点击上面的链接创建索引，或手动创建：');
+            console.warn('   集合: mediaFiles');
+            console.warn('   字段: userId (Ascending) + uploadDate (Descending)');
+          }
+        }
+        
+        // 如果Firestore查询失败，尝试从Storage加载（作为后备方案）
+        console.log('尝试从Storage加载文件作为后备方案...');
+        console.log('当前用户ID:', userId);
+        console.log('查找路径: media/' + userId + '/images/ 和 media/' + userId + '/videos/');
+        try {
+          const storageFiles = await listUserFiles(userId);
+          if (storageFiles.length > 0) {
+            setUploadedFiles(storageFiles);
+            console.log('✅ 从Storage加载历史文件成功（后备方案）:', storageFiles.length, '个文件');
+          } else {
+            console.warn('⚠️ Storage中也没有找到文件');
+            console.warn('可能的原因：');
+            console.warn('   1. 文件确实不存在');
+            console.warn('   2. 文件在其他用户ID下（当前用户ID:', userId, ')');
+            console.warn('   3. 文件路径不匹配');
+            console.warn('   4. Storage规则不允许list操作');
+            console.warn('建议：在Firebase Console中手动检查Storage文件是否存在');
+          }
+        } catch (storageError) {
+          console.error('从Storage加载文件失败:', storageError);
+          console.error('错误代码:', storageError.code);
+          console.error('错误消息:', storageError.message);
+          
+          if (storageError.code === 'storage/unauthorized' || storageError.code === 'storage/permission-denied') {
+            console.error('❌ 权限错误：Storage规则可能不允许list操作');
+            console.error('   请确保规则中包含 allow read: if true;（read权限包含list操作）');
+          }
+          
+          console.warn('使用当前会话的文件列表');
+        }
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+    
+    loadHistoryFiles();
+  }, [userId, activeTab, db]);
 
   // 清理预览URL
   useEffect(() => {
@@ -203,7 +314,7 @@ const MediaUpload = () => {
             showHelpLink: showHelpLink
           }]);
         },
-        onFileSuccess: (fileIndex, result) => {
+        onFileSuccess: async (fileIndex, result) => {
           const fileId = fileIdMapping[fileIndex];
           const fileInfo = selectedFiles.find(f => f.id === fileId);
           
@@ -224,6 +335,35 @@ const MediaUpload = () => {
           };
           
           setUploadedFiles(prev => [uploadedFile, ...prev]);
+          
+          // 保存到Firestore（用于历史记录）
+          if (db) {
+            try {
+              const fileData = {
+                userId: userId,
+                fileName: fileInfo.name,
+                fileType: fileInfo.type,
+                fileSize: fileInfo.size,
+                mimeType: fileInfo.file?.type || 'unknown',
+                storagePath: result.storagePath,
+                downloadURL: result.downloadURL,
+                thumbnailURL: fileInfo.preview || null,
+                uploadDate: new Date()
+              };
+              
+              const docRef = await addDoc(collection(db, 'mediaFiles'), fileData);
+              console.log('✅ 文件元数据已保存到Firestore，文档ID:', docRef.id);
+              
+              // 更新文件ID为Firestore文档ID，方便后续删除
+              uploadedFile.id = docRef.id;
+              setUploadedFiles(prev => prev.map(f => 
+                f.storagePath === result.storagePath ? { ...f, id: docRef.id } : f
+              ));
+            } catch (error) {
+              console.error('❌ 保存文件元数据到Firestore失败:', error);
+              // 不阻止上传成功，只是记录失败
+            }
+          }
           
           // 如果有下载URL错误，显示警告但不阻止文件添加到列表
           if (hasDownloadUrlError) {
@@ -295,18 +435,43 @@ const MediaUpload = () => {
   };
 
   // 处理下载
-  const handleDownload = (file) => {
-    if (file.url) {
-      // 创建一个临时链接并触发下载
+  const handleDownload = async (file) => {
+    try {
+      let downloadURL = file.url;
+      
+      // 如果没有下载URL，尝试从storagePath获取
+      if (!downloadURL && file.storagePath) {
+        try {
+          downloadURL = await getFileDownloadURL(file.storagePath);
+          // 更新文件对象中的URL
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === file.id ? { ...f, url: downloadURL } : f
+          ));
+        } catch (error) {
+          console.error('获取下载URL失败:', error);
+          alert('无法获取下载链接，请检查 Firebase Storage 安全规则是否允许读取权限');
+          return;
+        }
+      }
+      
+      if (!downloadURL) {
+        alert('文件下载链接不可用');
+        return;
+      }
+      
+      // 直接使用下载URL，让浏览器处理下载
+      // 这样可以避免CORS问题，因为Firebase Storage的URL已经包含了正确的CORS头
       const link = document.createElement('a');
-      link.href = file.url;
-      link.download = file.name;
-      link.target = '_blank';
+      link.href = downloadURL;
+      link.download = file.name; // 设置下载文件名
+      link.target = '_blank'; // 在新标签页打开（如果下载失败）
+      link.rel = 'noopener noreferrer'; // 安全设置
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } else {
-      alert('文件下载链接不可用');
+    } catch (error) {
+      console.error('下载文件失败:', error);
+      alert('下载失败: ' + (error.message || '请检查 Firebase Storage 安全规则'));
     }
   };
 
@@ -317,12 +482,77 @@ const MediaUpload = () => {
     }
 
     try {
-      await deleteFile(file.storagePath || file.id);
+      const storagePath = file.storagePath || file.id;
+      
+      if (!storagePath) {
+        throw new Error('文件路径不可用');
+      }
+      
+      // 从Storage删除文件
+      await deleteFile(storagePath);
+      
+      // 从Firestore删除文件记录
+      if (db && file.id && !file.id.startsWith('media/')) {
+        // 如果是Firestore文档ID，删除文档
+        try {
+          await deleteDoc(doc(db, 'mediaFiles', file.id));
+          console.log('✅ Firestore记录已删除');
+        } catch (firestoreError) {
+          console.warn('⚠️ 删除Firestore记录失败（可能不是Firestore记录）:', firestoreError);
+        }
+      } else if (db && storagePath) {
+        // 如果是storagePath，尝试查找并删除Firestore记录
+        try {
+          const mediaFilesRef = collection(db, 'mediaFiles');
+          const q = query(mediaFilesRef, where('storagePath', '==', storagePath));
+          const querySnapshot = await getDocs(q);
+          const deletePromises = [];
+          querySnapshot.forEach((docSnapshot) => {
+            deletePromises.push(deleteDoc(doc(db, 'mediaFiles', docSnapshot.id)));
+          });
+          await Promise.all(deletePromises);
+          console.log('✅ Firestore记录已删除');
+        } catch (firestoreError) {
+          console.warn('⚠️ 删除Firestore记录失败:', firestoreError);
+        }
+      }
+      
+      // 从列表中移除
       setUploadedFiles(prev => prev.filter(f => f.id !== file.id));
       alert('文件已删除');
     } catch (error) {
       console.error('删除文件失败:', error);
-      alert('删除失败: ' + error.message);
+      alert('删除失败: ' + (error.message || error.code || '未知错误'));
+    }
+  };
+  
+  // 处理预览
+  const handlePreview = async (file) => {
+    try {
+      let previewURL = file.url || file.thumbnail;
+      
+      // 如果没有预览URL，尝试从storagePath获取
+      if (!previewURL && file.storagePath) {
+        try {
+          previewURL = await getFileDownloadURL(file.storagePath);
+        } catch (error) {
+          console.error('获取预览URL失败:', error);
+          alert('无法预览此文件: ' + error.message);
+          return;
+        }
+      }
+      
+      if (previewURL) {
+        setPreviewFile({
+          ...file,
+          previewURL: previewURL
+        });
+      } else {
+        alert('无法预览此文件');
+      }
+    } catch (error) {
+      console.error('获取预览URL失败:', error);
+      alert('预览失败: ' + error.message);
     }
   };
 
@@ -488,8 +718,10 @@ const MediaUpload = () => {
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      allow read, write: if request.resource.size < 100 * 1024 * 1024
-                         && request.resource.contentType.matches('image/.*|video/.*');
+      // ⚠️ 测试模式：允许所有人读写删除（仅用于开发测试）
+      allow read, write, delete: if request.resource == null || 
+                                   (request.resource.size < 100 * 1024 * 1024
+                                    && request.resource.contentType.matches('image/.*|video/.*'));
     }
   }
 }`}</pre>
@@ -550,7 +782,12 @@ service firebase.storage {
           <div className="download-card">
             <h2 className="section-title">已上传的文件</h2>
             
-            {uploadedFiles.length === 0 ? (
+            {loadingHistory ? (
+              <div className="empty-media">
+                <span className="empty-icon">⏳</span>
+                <p>正在加载历史文件...</p>
+              </div>
+            ) : uploadedFiles.length === 0 ? (
               <div className="empty-media">
                 <span className="empty-icon">📭</span>
                 <p>暂无已上传的文件</p>
@@ -560,9 +797,29 @@ service firebase.storage {
               <div className="media-grid">
                 {uploadedFiles.map(file => (
                   <div key={file.id} className="media-item">
-                    <div className="media-thumbnail">
+                    <div 
+                      className="media-thumbnail" 
+                      onClick={() => handlePreview(file)} 
+                      style={{ cursor: 'pointer' }}
+                    >
                       {file.type === 'image' ? (
-                        <img src={file.thumbnail} alt={file.name} />
+                        file.thumbnail || file.url ? (
+                          <img 
+                            src={file.thumbnail || file.url} 
+                            alt={file.name}
+                            onError={(e) => {
+                              // 如果缩略图加载失败，尝试使用下载URL
+                              if (file.url && e.target.src !== file.url) {
+                                e.target.src = file.url;
+                              } else {
+                                e.target.style.display = 'none';
+                                e.target.parentElement.innerHTML = '<div class="image-placeholder">🖼️</div>';
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="image-placeholder">🖼️</div>
+                        )
                       ) : (
                         <div className="video-thumbnail">
                           <span className="play-icon">▶</span>
@@ -570,15 +827,31 @@ service firebase.storage {
                       )}
                       <div className="media-overlay">
                         <button
+                          className="media-action-btn preview-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreview(file);
+                          }}
+                          title="预览"
+                        >
+                          👁️
+                        </button>
+                        <button
                           className="media-action-btn download-btn"
-                          onClick={() => handleDownload(file)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(file);
+                          }}
                           title="下载"
                         >
                           ⬇️
                         </button>
                         <button
                           className="media-action-btn delete-btn"
-                          onClick={() => handleDelete(file)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(file);
+                          }}
                           title="删除"
                         >
                           🗑️
@@ -610,6 +883,35 @@ service firebase.storage {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 预览模态框 */}
+      {previewFile && (
+        <div className="preview-modal" onClick={() => setPreviewFile(null)}>
+          <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+            <button className="preview-close" onClick={() => setPreviewFile(null)}>✕</button>
+            {previewFile.type === 'image' ? (
+              <img src={previewFile.previewURL || previewFile.url || previewFile.thumbnail} alt={previewFile.name} />
+            ) : (
+              <video controls src={previewFile.previewURL || previewFile.url}>
+                您的浏览器不支持视频播放
+              </video>
+            )}
+            <div className="preview-info">
+              <h3>{previewFile.name}</h3>
+              <p>{previewFile.type === 'image' ? '🖼️ 图片' : '🎥 视频'} • {previewFile.size}</p>
+              <div className="preview-actions">
+                <button onClick={() => {
+                  handleDownload(previewFile);
+                }}>⬇️ 下载</button>
+                <button onClick={() => {
+                  handleDelete(previewFile);
+                  setPreviewFile(null);
+                }}>🗑️ 删除</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

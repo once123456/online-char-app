@@ -195,3 +195,4 @@ const CourseList = ({ enrollment, courseDetails }) => {
 export default CourseList;
 
 
+

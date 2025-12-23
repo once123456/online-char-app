@@ -23,13 +23,26 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      // ⚠️ 测试模式：允许所有人读写（仅用于开发测试）
-      allow read, write: if request.resource.size < 100 * 1024 * 1024
-                         && request.resource.contentType.matches('image/.*|video/.*');
+      // ⚠️ 测试模式：允许所有人读写删除和列表（仅用于开发测试）
+      // 注意：read 权限包含 list 操作（列出文件夹内容）
+      allow read: if true;  // 允许读取、下载和列出文件
+      allow write: if request.resource.size < 100 * 1024 * 1024
+                 && request.resource.contentType.matches('image/.*|video/.*');
+      allow delete: if true;  // 允许删除文件
     }
   }
 }
 ```
+
+**重要说明**：
+- `read: if true` - 允许读取、下载和**列出文件**（必需，包含list操作）⭐
+- `write` - 允许上传文件（必需，校验大小和类型）
+- `delete: if true` - 允许删除文件（必需）
+
+**注意**：`read` 权限包括：
+- 读取文件内容
+- 获取下载URL
+- **列出文件夹内容（list操作）** ⭐ 这个很重要，没有这个无法显示历史文件！
 
 ### 步骤 5: 发布规则
 1. 点击右上角 **"发布"** 按钮

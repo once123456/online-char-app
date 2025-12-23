@@ -186,3 +186,4 @@ const ActivityDetail = ({ activity, onBack }) => {
 
 export default ActivityDetail;
 
+

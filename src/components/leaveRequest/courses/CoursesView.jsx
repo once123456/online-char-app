@@ -107,3 +107,4 @@ const CoursesView = ({ enrollment = [] }) => {
 export default CoursesView;
 
 
+

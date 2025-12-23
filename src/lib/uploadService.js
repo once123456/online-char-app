@@ -2,7 +2,7 @@
  * Firebase Storage 上传服务
  * 处理文件上传到 Firebase Storage
  */
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject, listAll } from "firebase/storage";
 import { storage } from "./firebase";
 import { getFileContentType, generateStoragePath, formatFileSize } from "../components/media/filePreprocessor";
 
@@ -311,6 +311,100 @@ export const getFileDownloadURL = async (storagePath) => {
     return downloadURL;
   } catch (error) {
     console.error('Error getting download URL:', error);
+    throw error;
+  }
+};
+
+/**
+ * 列出用户的所有文件（从Storage直接列出）
+ * @param {string} userId - 用户ID
+ * @returns {Promise<Array>} - 文件列表
+ */
+export const listUserFiles = async (userId) => {
+  try {
+    const userPath = `media/${userId}`;
+    console.log('📂 开始从Storage列出文件，路径:', userPath);
+    const files = [];
+    
+    // 列出images和videos文件夹
+    const folders = ['images', 'videos'];
+    
+    for (const folder of folders) {
+      try {
+        const folderPath = `${userPath}/${folder}`;
+        const folderRef = ref(storage, folderPath);
+        console.log(`📁 尝试列出文件夹: ${folderPath}`);
+        
+        const listResult = await listAll(folderRef);
+        console.log(`📂 找到 ${listResult.items.length} 个文件在 ${folder} 文件夹`);
+        
+        if (listResult.items.length > 0) {
+          console.log('文件列表:', listResult.items.map(item => item.name));
+        }
+        
+        // 获取所有文件的下载URL
+        for (const itemRef of listResult.items) {
+          try {
+            const downloadURL = await getDownloadURL(itemRef);
+            const fileName = itemRef.name;
+            
+            // 从文件名中提取原始文件名（移除时间戳前缀）
+            const originalName = fileName.replace(/^\d+_/, '');
+            
+            files.push({
+              id: itemRef.fullPath,
+              name: originalName,
+              type: folder === 'images' ? 'image' : 'video',
+              size: '未知', // Storage API不直接提供文件大小
+              uploadDate: '未知',
+              thumbnail: folder === 'images' ? downloadURL : null,
+              url: downloadURL,
+              storagePath: itemRef.fullPath,
+              downloadUrlError: null
+            });
+            console.log(`✅ 已添加文件: ${originalName} (${itemRef.fullPath})`);
+          } catch (error) {
+            console.warn(`⚠️ 无法获取文件 ${itemRef.name} 的下载URL:`, error);
+            // 即使无法获取URL，也添加到列表
+            files.push({
+              id: itemRef.fullPath,
+              name: itemRef.name.replace(/^\d+_/, ''),
+              type: folder === 'images' ? 'image' : 'video',
+              size: '未知',
+              uploadDate: '未知',
+              thumbnail: null,
+              url: null,
+              storagePath: itemRef.fullPath,
+              downloadUrlError: { type: 'missing_url', message: error.message }
+            });
+          }
+        }
+      } catch (error) {
+        console.warn(`⚠️ 无法列出文件夹 ${folder}:`, error);
+        console.warn(`   错误代码: ${error.code}, 错误消息: ${error.message}`);
+        
+        // 如果是权限错误，提供更详细的提示
+        if (error.code === 'storage/unauthorized' || error.code === 'storage/permission-denied') {
+          console.error('❌ 权限错误：请检查 Firebase Storage 安全规则是否允许 list 操作');
+        }
+      }
+    }
+    
+    console.log(`✅ 从Storage列出文件完成，共 ${files.length} 个文件`);
+    
+    if (files.length === 0) {
+      console.warn('⚠️ 未找到任何文件，可能的原因：');
+      console.warn('   1. 文件路径不正确（当前路径:', userPath, ')');
+      console.warn('   2. 文件在其他用户ID下');
+      console.warn('   3. Storage规则不允许list操作');
+      console.warn('   4. 确实没有上传过文件');
+    }
+    
+    return files;
+  } catch (error) {
+    console.error('❌ 列出用户文件失败:', error);
+    console.error('   错误代码:', error.code);
+    console.error('   错误消息:', error.message);
     throw error;
   }
 };
